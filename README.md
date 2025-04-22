@@ -64,7 +64,7 @@ You need a C++ compiler (like `g++`) that supports C++11 or later. You also need
    If you haven't already cloned this repository, you can do so by running:
    ```bash
    git clone https://github.com/Naoyuki-Christopher-H/integer-ruler-cpp.git
-   cd integer-ruler-cpp
+   cd ./integer-ruler-cpp
    ```
 
 2. **Compile the program**:
@@ -105,6 +105,12 @@ We welcome contributions to this project! If you would like to contribute, you c
 1. Fork the repository.
 2. Create a new branch for your feature or fix.
 3. Submit a pull request with a description of your changes.
+
+---
+
+## **License**
+
+This project is open-source and available under the [MIT License](LICENSE).
 
 ---
 
