@@ -2,164 +2,176 @@
 #include <vector>
 #include <unordered_set>
 #include <cmath>
+#include <limits> // For numeric_limits
 
 using namespace std;
 
-// Function declarations
+/**
+ * Function declarations
+ */
 vector<int> findFewestMarks(int length);
 vector<int> backtrackRuler(int maxLength, int numMarks);
 vector<int> backtrack(int nextStart, int maxLength, int numMarks, vector<int>& currentMarks);
 bool canMeasureAll(const vector<int>& marks, int maxLength);
 
-// Main function: Starts the program execution, prompts for input, and displays results
+/**
+ * Main function: Starts program execution.
+ * - Prompts the user for input.
+ * - Handles invalid input using exception handling.
+ * - Displays the result: fewest marks and their positions.
+ */
 int main()
 {
     int rulerLength;
 
-    // Prompt the user for the length of the ruler (X)
-    cout << "Enter the integer length of the ruler (X): ";
-    cin >> rulerLength;
-
-    // Calculate the fewest marks needed to measure all lengths from 1 to X
-    vector<int> marks = findFewestMarks(rulerLength);
-
-    // Output the number of marks and the actual marks on the ruler
-    cout << "Fewest marks needed: " << marks.size() << endl;
-    cout << "Marks on the ruler: ";
-    for (size_t i = 0; i < marks.size(); ++i)
+    try
     {
-        cout << marks[i];
-        if (i != marks.size() - 1)
-        {
-            cout << ", "; // Print comma separator for marks
-        }
-    }
-    cout << endl;
+        cout << "Enter the integer length of the ruler (X): ";
 
-    return 0;
+        // Validate input to ensure it's an integer
+        if (!(cin >> rulerLength))
+        {
+            throw invalid_argument("Invalid input. Please enter a valid integer.");
+        }
+
+        // Input must be a positive integer
+        if (rulerLength <= 0)
+        {
+            throw out_of_range("Ruler length must be a positive integer greater than zero.");
+        }
+
+        // Attempt to find the fewest marks to measure all distances from 1 to rulerLength
+        vector<int> marks = findFewestMarks(rulerLength);
+
+        // Output the result
+        cout << "Fewest marks needed: " << marks.size() << endl;
+        cout << "Marks on the ruler: ";
+        for (size_t i = 0; i < marks.size(); ++i)
+        {
+            cout << marks[i];
+            if (i != marks.size() - 1)
+            {
+                cout << ", ";
+            }
+        }
+        cout << endl;
+    }
+    catch (const exception& e)
+    {
+        // Catch any exceptions thrown during input or processing
+        cerr << "Error: " << e.what() << endl;
+        return 1; // Exit with error status
+    }
+
+    return 0; // Successful execution
 }
 
 /**
  * findFewestMarks Function
  * -------------------------
- * This function attempts to find the fewest number of marks that can measure all integer distances from 1 to the given length (X).
- * It starts by trying 2 marks, then 3, and so on up to X + 1 marks, checking after each attempt if a valid ruler can be formed.
- * Once a valid ruler is found, the function returns the marks list.
+ * Attempts to find the minimal number of marks needed to measure all integer distances from 1 to 'length'.
  *
- * @param length The target ruler length (X).
- * @return A vector of integers representing the fewest marks required to measure all integer distances from 1 to X.
+ * @param length The maximum distance (length of the ruler).
+ * @return A vector containing the positions of the fewest marks that can measure all required distances.
  */
 vector<int> findFewestMarks(int length)
 {
-    // Iterate over possible numbers of marks (starting from 2 to length + 1)
     for (int markCount = 2; markCount <= length + 1; ++markCount)
     {
-        // Try to generate a valid ruler with 'markCount' marks
         vector<int> result = backtrackRuler(length, markCount);
-        if (!result.empty()) // If a valid ruler is found, return it
+        if (!result.empty())
         {
-            return result;
+            return result; // Return first successful configuration
         }
     }
 
-    // If no valid ruler is found (shouldn't happen for reasonable inputs), return an empty vector
-    return {};
+    return {}; // Return empty if no configuration found (should not occur for reasonable lengths)
 }
 
 /**
  * backtrackRuler Function
  * -------------------------
- * Initializes the backtracking process by placing the first mark at 0, and recursively tries to build the rest of the marks.
- * It ensures that we only try placing marks from `nextStart` up to `maxLength`.
+ * Initializes the recursive backtracking algorithm with the first mark at position 0.
  *
- * @param maxLength The target ruler length (X).
- * @param numMarks The number of marks to try placing on the ruler.
- * @return A vector of integers representing a valid set of marks that can measure all integer distances from 1 to X.
+ * @param maxLength The length of the ruler.
+ * @param numMarks The number of marks to place on the ruler.
+ * @return A valid configuration of marks, or empty if none found.
  */
 vector<int> backtrackRuler(int maxLength, int numMarks)
 {
     vector<int> currentMarks;
-    currentMarks.push_back(0); // Always include 0 as the first mark (starting point)
-
-    // Start the recursive backtracking with the next possible mark being 1
-    return backtrack(1, maxLength, numMarks, currentMarks);
+    currentMarks.push_back(0); // The first mark is always at 0
+    return backtrack(1, maxLength, numMarks, currentMarks); // Start backtracking from position 1
 }
 
 /**
  * backtrack Function
  * -------------------
- * A recursive function that tries to place marks on the ruler. It explores all possible combinations of marks
- * and checks if a valid solution exists by invoking `canMeasureAll`.
+ * Recursive function to place marks on the ruler and check for valid configurations.
  *
- * @param nextStart The next mark to consider placing (starting from 1).
- * @param maxLength The target ruler length (X).
- * @param numMarks The total number of marks to be placed on the ruler.
- * @param currentMarks The current set of marks that have been placed so far.
- * @return A vector of integers representing a valid set of marks that can measure all integer distances from 1 to X.
+ * @param nextStart The next candidate position for a new mark.
+ * @param maxLength The length of the ruler.
+ * @param numMarks Total number of marks to be placed.
+ * @param currentMarks The current list of placed marks.
+ * @return A valid configuration of marks if found, or an empty vector otherwise.
  */
 vector<int> backtrack(int nextStart, int maxLength, int numMarks, vector<int>& currentMarks)
 {
-    // Base case: If we've placed the required number of marks, check if it's a valid solution
     if (currentMarks.size() == static_cast<size_t>(numMarks))
     {
-        if (canMeasureAll(currentMarks, maxLength)) // Check if we can measure all distances from 1 to X
+        if (canMeasureAll(currentMarks, maxLength))
         {
-            return currentMarks; // Return the valid solution
+            return currentMarks; // Valid configuration
         }
-        return {}; // No valid solution, backtrack
+        return {}; // Invalid configuration, backtrack
     }
 
-    // Try placing the next mark, from 'nextStart' to 'maxLength'
     for (int i = nextStart; i <= maxLength; ++i)
     {
-        currentMarks.push_back(i); // Try placing mark at position i
+        currentMarks.push_back(i); // Add new mark
 
-        // Recursively try to place the next mark
         vector<int> result = backtrack(i + 1, maxLength, numMarks, currentMarks);
-        if (!result.empty()) // If a valid solution is found, return it
+        if (!result.empty())
         {
-            return result;
+            return result; // Return if valid configuration found
         }
 
-        // Backtrack: Remove the last placed mark and try a different position
-        currentMarks.pop_back();
+        currentMarks.pop_back(); // Remove last mark to try another position
     }
 
-    return {}; // If no valid solution found, return empty vector
+    return {}; // No valid configuration found in this path
 }
 
 /**
  * canMeasureAll Function
  * ------------------------
- * This function checks if all integer distances from 1 to `maxLength` can be measured
- * using the current set of marks by comparing all pairwise differences between marks.
+ * Checks if all integer distances from 1 to maxLength can be measured using the current marks.
  *
- * @param marks A vector of integers representing the marks on the ruler.
- * @param maxLength The target ruler length (X).
- * @return True if all distances from 1 to X can be measured, false otherwise.
+ * @param marks A vector containing the mark positions.
+ * @param maxLength The maximum distance to check for.
+ * @return True if all distances are measurable, false otherwise.
  */
 bool canMeasureAll(const vector<int>& marks, int maxLength)
 {
-    unordered_set<int> diffs; // Set to store the unique pairwise differences
+    unordered_set<int> diffs;
 
-    // Generate all pairwise differences and store them in the 'diffs' set
+    // Generate all unique absolute differences between pairs of marks
     for (size_t i = 0; i < marks.size(); ++i)
     {
         for (size_t j = i + 1; j < marks.size(); ++j)
         {
-            diffs.insert(abs(marks[j] - marks[i])); // Add the absolute difference between marks
+            diffs.insert(abs(marks[j] - marks[i]));
         }
     }
 
-    // Check if all distances from 1 to maxLength are present in the set of differences
+    // Verify that all distances from 1 to maxLength are covered
     for (int i = 1; i <= maxLength; ++i)
     {
-        if (diffs.find(i) == diffs.end()) // If any distance is missing, return false
+        if (diffs.find(i) == diffs.end())
         {
-            return false;
+            return false; // Missing distance
         }
     }
 
-    // If all distances are found, return true
-    return true;
+    return true; // All distances measurable
 }
